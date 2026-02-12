@@ -26,14 +26,28 @@ export const COMPONENT_MANIFEST = {
         'Vertical sidebar navigation. "items" is an array of {label, icon?} objects. Variants: default, compact.',
     },
     Container: {
-      props: ["maxWidth", "padding"] as const,
+      props: ["maxWidth", "padding", "grow"] as const,
       description:
-        'Content wrapper. maxWidth: "sm"|"md"|"lg"|"xl"|"full". padding: "none"|"sm"|"md"|"lg".',
+        'Content wrapper. maxWidth: "sm"|"md"|"lg"|"xl"|"full". padding: "none"|"sm"|"md"|"lg". grow: boolean (expands to fill space).',
     },
     Grid: {
       props: ["columns", "gap"] as const,
       description:
         'CSS Grid layout. columns: 1-6 (number). gap: "none"|"sm"|"md"|"lg".',
+    },
+    HStack: {
+      props: ["gap", "align", "justify", "wrap", "children"] as const,
+      description:
+        'Horizontal stack (Flex Row). gap: "none"|"sm"|"md"|"lg". align: "start"|"center"|"end"|"stretch". justify: "start"|"center"|"end"|"between". wrap: boolean.',
+    },
+    VStack: {
+      props: ["gap", "align", "justify", "children"] as const,
+      description:
+        'Vertical stack (Flex Col). gap: "none"|"sm"|"md"|"lg". align: "start"|"center"|"end"|"stretch". justify: "start"|"center"|"end"|"between".',
+    },
+    Spacer: {
+      props: [] as const,
+      description: "Flexible spacer that grows to fill available space.",
     },
   },
   Elements: {
