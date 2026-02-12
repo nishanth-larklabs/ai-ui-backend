@@ -21,11 +21,16 @@ RULES (NON-NEGOTIABLE):
 
 OUTPUT FORMAT — a single JSON object representing the component tree:
 {
-  "type": "ComponentName",
-  "props": { "propName": "value" },
-  "children": [ ...child nodes or string text ]
+  "thinking": "Brief explanation of your design choices...",
+  "layout": {
+    "type": "ComponentName",
+    "props": { "propName": "value" },
+    "children": [ ...child nodes or string text ]
+  }
 }
 
+- "thinking": A string explaining WHY you chose this layout and these components.
+- "layout": The actual component tree.
 - "children" can be an array of component objects or plain strings for text content.
 - If a component has no children, omit the "children" key.
 
@@ -67,7 +72,13 @@ export async function runPlanner(
   const cleaned = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "");
 
   try {
-    return JSON.parse(cleaned) as LayoutNode;
+    const parsed = JSON.parse(cleaned);
+    // Support both old format (direct node) and new CoT format ({ thinking, layout })
+    if ("layout" in parsed) {
+      console.log("\n🧠 [Planner Thinking]:", parsed.thinking, "\n");
+      return parsed.layout as LayoutNode;
+    }
+    return parsed as LayoutNode;
   } catch {
     throw new Error(`Planner returned invalid JSON:\n${text}`);
   }
