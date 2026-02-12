@@ -9,7 +9,7 @@
  */
 
 import { Router, Request, Response } from "express";
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 import { runPlanner, LayoutNode } from "../agents/planner";
 import { runGenerator } from "../agents/generator";
 import { runExplainer } from "../agents/explainer";
@@ -26,21 +26,21 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       res
         .status(500)
-        .json({ error: "GEMINI_API_KEY is not configured on the server." });
+        .json({ error: "GROQ_API_KEY is not configured on the server." });
       return;
     }
 
-    const genai = new GoogleGenAI({ apiKey });
+    const groq = new Groq({ apiKey });
 
     // Step 1: Planner
     console.log("[Agent Trinity] Step 1/3: Planner running...");
     let blueprint: LayoutNode;
     try {
-      blueprint = await runPlanner(genai, {
+      blueprint = await runPlanner(groq, {
         prompt,
         currentBlueprint: currentBlueprint || null,
       });
@@ -57,7 +57,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     console.log("[Agent Trinity] Step 2/3: Generator running...");
     let rawCode: string;
     try {
-      rawCode = await runGenerator(genai, { blueprint });
+      rawCode = await runGenerator(groq, { blueprint });
     } catch (err) {
       console.error("[Generator Error]", err);
       res.status(500).json({
@@ -78,7 +78,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     console.log("[Agent Trinity] Step 3/3: Explainer running...");
     let explanation: string;
     try {
-      explanation = await runExplainer(genai, {
+      explanation = await runExplainer(groq, {
         prompt,
         blueprint,
         previousCode: currentCode || null,

@@ -5,7 +5,7 @@
  * executable React JSX code using ONLY whitelisted components.
  */
 
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 import { getManifestPromptString } from "./componentManifest";
 
 const GENERATOR_SYSTEM_PROMPT = `You are the Generator Agent — "The Builder" of a deterministic UI generation system.
@@ -31,21 +31,21 @@ export interface GeneratorInput {
 }
 
 export async function runGenerator(
-  genai: GoogleGenAI,
+  groq: Groq,
   input: GeneratorInput
 ): Promise<string> {
   const userMessage = `Convert this JSON layout blueprint into React JSX code:\n\n${JSON.stringify(input.blueprint, null, 2)}`;
 
-  const response = await genai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: userMessage,
-    config: {
-      systemInstruction: GENERATOR_SYSTEM_PROMPT,
-      temperature: 0.8,
-    },
+  const response = await groq.chat.completions.create({
+    messages: [
+      { role: "system", content: GENERATOR_SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
+    ],
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.8,
   });
 
-  const text = response.text?.trim() || "";
+  const text = response.choices[0]?.message?.content?.trim() || "";
 
   // Strip markdown code fences if present
   const cleaned = text

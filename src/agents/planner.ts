@@ -5,7 +5,7 @@
  * using ONLY allowed components from the manifest.
  */
 
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 import { getManifestPromptString } from "./componentManifest";
 
 const PLANNER_SYSTEM_PROMPT = `You are the Planner Agent — "The Architect" of a deterministic UI generation system.
@@ -44,24 +44,24 @@ export interface LayoutNode {
 }
 
 export async function runPlanner(
-  genai: GoogleGenAI,
+  groq: Groq,
   input: PlannerInput
 ): Promise<LayoutNode> {
   const userMessage = input.currentBlueprint
     ? `Current UI layout (JSON):\n${JSON.stringify(input.currentBlueprint, null, 2)}\n\nUser request: ${input.prompt}`
     : `User request: ${input.prompt}`;
 
-  const response = await genai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: userMessage,
-    config: {
-      systemInstruction: PLANNER_SYSTEM_PROMPT,
-      temperature: 0.8,
-      responseMimeType: "application/json",
-    },
+  const response = await groq.chat.completions.create({
+    messages: [
+      { role: "system", content: PLANNER_SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
+    ],
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.8,
+    response_format: { type: "json_object" },
   });
 
-  const text = response.text?.trim() || "{}";
+  const text = response.choices[0]?.message?.content?.trim() || "{}";
 
   // Parse JSON — strip markdown fences if the model wraps them
   const cleaned = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "");

@@ -5,7 +5,7 @@
  * and generates a plain-English explanation of what changed and why.
  */
 
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 
 const EXPLAINER_SYSTEM_PROMPT = `You are the Explainer Agent — "The Narrator" of a deterministic UI generation system.
 
@@ -30,7 +30,7 @@ export interface ExplainerInput {
 }
 
 export async function runExplainer(
-  genai: GoogleGenAI,
+  groq: Groq,
   input: ExplainerInput
 ): Promise<string> {
   let userMessage = `User's request: "${input.prompt}"\n\nGenerated layout blueprint:\n${JSON.stringify(input.blueprint, null, 2)}\n\nGenerated code:\n${input.newCode}`;
@@ -39,14 +39,14 @@ export async function runExplainer(
     userMessage += `\n\nPrevious code (before this change):\n${input.previousCode}`;
   }
 
-  const response = await genai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: userMessage,
-    config: {
-      systemInstruction: EXPLAINER_SYSTEM_PROMPT,
-      temperature: 0.8,
-    },
+  const response = await groq.chat.completions.create({
+    messages: [
+      { role: "system", content: EXPLAINER_SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
+    ],
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.8,
   });
 
-  return response.text?.trim() || "Changes were applied successfully.";
+  return response.choices[0]?.message?.content?.trim() || "Changes were applied successfully.";
 }
